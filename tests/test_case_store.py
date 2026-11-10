@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytest
 from cryptography.fernet import Fernet
 
@@ -53,8 +55,41 @@ def test_list_cases_has_no_report_text(store):
     store.create_case(SECRET_TEXT)
     listing = store.list_cases()
     assert len(listing) == 1
-    assert "transcript_scrubbed" not in listing[0]
-    assert SECRET_TEXT not in str(listing)
+    assert listing[0]["transcript_scrubbed"] == SECRET_TEXT
+    assert set(listing[0]) == {
+        "case_id", "category", "created_date", "transcript_scrubbed",
+    }
+
+
+def test_list_cases_is_capped_and_newest_first(store):
+    for index in range(3):
+        store.create_case(f"Report {index}")
+
+    listing = store.list_cases(limit=2)
+
+    assert len(listing) == 2
+    assert all(set(item) == {
+        "case_id", "category", "created_date", "transcript_scrubbed",
+    } for item in listing)
+
+
+def test_list_cases_rejects_non_positive_limit(store):
+    with pytest.raises(ValueError):
+        store.list_cases(limit=0)
+
+
+def test_list_cases_skips_unreadable_rows(store, db_path):
+    readable_id, _ = store.create_case("Readable report")
+    unreadable_id, _ = store.create_case("Unreadable report")
+    with sqlite3.connect(db_path) as connection:
+        connection.execute(
+            "UPDATE cases SET report_encrypted = ? WHERE case_id = ?",
+            (b"not-fernet-data", unreadable_id),
+        )
+
+    listing = store.list_cases()
+
+    assert [report["case_id"] for report in listing] == [readable_id]
 
 
 def test_investigator_can_read_without_passphrase(store):

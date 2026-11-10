@@ -28,6 +28,9 @@ Browser -> FastAPI intake -> local STT -> PII scrubber
 |--------|----------------------|---------|---------------|
 | `process_report(audio_bytes)` | Python interface | Return scrubbed report output | No |
 | `GET` | `/health` | Readiness check | No |
+| `POST` | `/investigator/login` | Issue a 30-minute investigator token | No |
+| `GET` | `/investigator/reports` | List up to 100 scrubbed reports | Investigator token |
+| `GET` | `/investigator/reports/{case_id}` | View one scrubbed report | Investigator token |
 
 ## Key decisions and tradeoffs
 
@@ -59,3 +62,9 @@ Investigator login uses one shared password from the environment and a
 fixed investigator-login key lock that login from the case/IP limiter for
 15 minutes; this is intentionally a simple demo tradeoff rather than a
 multi-user identity system.
+
+Investigator report responses expose the case ID, category, date, and scrubbed
+transcript only. They never expose passphrases, password hashes, encryption
+fields, or raw report content. List responses are capped at the newest 100
+reports. If an individual stored row cannot be decrypted, the investigator
+list skips that row rather than exposing an error or failing the whole list.

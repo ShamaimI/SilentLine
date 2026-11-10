@@ -81,13 +81,23 @@ class CaseStore:
             return None
         return self._row_to_report(case_id, row[1], row[2], row[3])
 
-    def list_cases(self) -> list[dict]:
-        """Investigator list view: metadata only, no report text."""
+    def list_cases(self, limit: int = 100) -> list[dict]:
+        """Return newest investigator reports with scrubbed text only."""
+        if limit < 1:
+            raise ValueError("limit must be positive")
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT case_id, category, created_date FROM cases ORDER BY created_date DESC"
+                "SELECT case_id, category, created_date, report_encrypted FROM cases "
+                "ORDER BY created_date DESC, rowid DESC LIMIT ?",
+                (limit,),
             ).fetchall()
-        return [{"case_id": r[0], "category": r[1], "created_date": r[2]} for r in rows]
+        reports = []
+        for row in rows:
+            try:
+                reports.append(self._row_to_report(row[0], row[1], row[2], row[3]))
+            except EncryptionKeyError:
+                continue
+        return reports
 
     def get_report_for_investigator(self, case_id: str) -> Optional[dict]:
         """Caller must already be authenticated as an investigator."""

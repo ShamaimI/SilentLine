@@ -1,7 +1,7 @@
 SILENTLINE: CASE LOOKUP RATE LIMITING, MANUAL TEST EVIDENCE
 Date: 2026-11-10
 Server: python -m uvicorn app.main:app --env-file .env --no-access-log
-Automated: tests/test_ratelimit.py, 13 passed. Full suite, 72 passed.
+Automated: tests/test_ratelimit.py, 13 passed. Full suite, 114 passed.
 
 ==================== PART A (fresh server start) ====================
 PASS  T1 correct lookup returns 200
@@ -60,3 +60,12 @@ Server log free of identifiers (normal traffic) ............. verified
 Limitations: state is in memory and resets on restart, so run a
 single worker. Someone who knows a case ID can lock that case for
 15 minutes.
+
+==================== PROTECTED REPORT ACCESS ====================
+PASS  A9 list has scrubbed text, no raw name or phone
+      Corrected check: the list contains "[NAME]" and does not contain
+      "Bilal" or "03001234567".
+
+Hardening: investigator listings skip unreadable encrypted rows instead
+of failing the entire response. Regression test added and full suite
+passes with 114 tests.
