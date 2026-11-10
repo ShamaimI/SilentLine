@@ -2,9 +2,11 @@
 import os
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from app.cases.store import CaseStore
+from app.deps import get_store
 from app.pipeline import TranscriptionFailed, process_report, process_text
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -23,6 +25,8 @@ class TextReport(BaseModel):
 
 
 class ReportResponse(BaseModel):
+    case_id: str
+    passphrase: str  # shown once; only a hash is stored
     transcript_scrubbed: str
     removed_counts: dict[str, int]
     category: Category = "other"
@@ -38,21 +42,31 @@ async def _read_capped(request: Request, limit: int) -> bytes:
     return b"".join(chunks)
 
 
+def _save_and_respond(store: CaseStore, result, category: str, response: Response) -> ReportResponse:
+    case_id, passphrase = store.create_case(result.transcript_scrubbed, category)
+    response.headers["Cache-Control"] = "no-store"  # the passphrase must not be cached
+    return ReportResponse(
+        case_id=case_id,
+        passphrase=passphrase,
+        transcript_scrubbed=result.transcript_scrubbed,
+        removed_counts=result.removed_counts,
+        category=category,
+    )
+
+
 @router.post("/text", response_model=ReportResponse)
-def submit_text(report: TextReport) -> ReportResponse:
+def submit_text(report: TextReport, response: Response,
+                store: CaseStore = Depends(get_store)) -> ReportResponse:
     try:
         result = process_text(report.text)
     except ValueError:
         raise HTTPException(status_code=422, detail="Report text is empty.")
-    return ReportResponse(
-        transcript_scrubbed=result.transcript_scrubbed,
-        removed_counts=result.removed_counts,
-        category=report.category,
-    )
+    return _save_and_respond(store, result, report.category, response)
 
 
 @router.post("/audio", response_model=ReportResponse)
-async def submit_audio(request: Request, category: Category = "other") -> ReportResponse:
+async def submit_audio(request: Request, response: Response, category: Category = "other",
+                       store: CaseStore = Depends(get_store)) -> ReportResponse:
     if not request.headers.get("content-type", "").startswith("audio/"):
         raise HTTPException(status_code=415, detail="Send audio as the request body.")
     audio = await _read_capped(request, MAX_UPLOAD_BYTES)
@@ -66,8 +80,4 @@ async def submit_audio(request: Request, category: Category = "other") -> Report
             detail={"code": "transcription_failed",
                     "message": "We could not transcribe your recording. Please type your report instead."},
         )
-    return ReportResponse(
-        transcript_scrubbed=result.transcript_scrubbed,
-        removed_counts=result.removed_counts,
-        category=category,
-    )
+    return _save_and_respond(store, result, category, response)
