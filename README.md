@@ -1,14 +1,19 @@
-# <Product Name>
+# SilentLine
+
+> Privacy-first occupational reporting prototype · Demo only, not for real reports
 
 > AI-Powered SE-MAX · CUI Tech Fest FA'26 · Team: <Team Name>
 
 ## What it does
 
-<!-- One or two sentences. -->
+SilentLine lets a reporter submit a voice or typed report while minimizing
+identifying data. Audio is processed locally, scrubbed for common PII, and
+stored only as an encrypted demo report.
 
 ## Problem and user
 
-<!-- Who is the user, and what problem does this solve for them? -->
+Reporters who need a lower-exposure reporting channel and authorized
+investigators reviewing scrubbed fictional reports.
 
 ## Live deployment
 
@@ -19,9 +24,9 @@
 
 <!-- Exact steps a judge follows to use the product without your laptop. -->
 
-1.
-2.
-3.
+1. Copy `.env.example` to `.env` and set local demo values.
+2. Install dependencies with `pip install -r requirements.txt`.
+3. Run `uvicorn app.main:app --reload` and open `http://localhost:8000/docs`.
 
 ## Test accounts
 
@@ -35,17 +40,37 @@
 
 ### Prerequisites
 
+- Python 3.11+
+- Docker (optional)
+
 ### Setup
+
+```powershell
+pip install -r requirements.txt
+```
 
 ### Environment variables
 
-<!-- List variable names only. Values go in a local .env file (see .env.example). -->
+See `.env.example`. Do not commit credentials or encryption keys.
 
 ### Run
 
+```powershell
+uvicorn app.main:app --reload
+```
+
 ### Run tests
 
+```powershell
+pytest
+```
+
 ## Known limitations
+
+- This is a fictional-data prototype and is not suitable for real reports.
+- STT, PII scrubbing, storage, authentication, and investigator workflows are
+  being implemented incrementally.
+- PII removal is not anonymity; story details may still identify a reporter.
 
 ## Documentation
 
@@ -59,4 +84,5 @@
 
 | Name | Role |
 |------|------|
-|      |      |
+| Shumaim | Backend, product, PII scrubber, case security |
+| Ayesha | STT, upload hardening, investigator access |
