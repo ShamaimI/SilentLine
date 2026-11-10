@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api.cases import router as cases_router
+from .api.investigator import router as investigator_router
+from .api.investigator_cases import router as investigator_cases_router
 from .api.reports import router as reports_router
 from .deps import get_store
 
@@ -23,6 +25,8 @@ app = FastAPI(
 
 app.include_router(reports_router)
 app.include_router(cases_router)
+app.include_router(investigator_router)
+app.include_router(investigator_cases_router)
 
 
 @app.get("/health")

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SilentLine Investigator</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 1rem; }
+  .banner { background: #b00020; color: #fff; padding: .5rem 1rem; text-align: center; margin: -1rem -1rem 1rem; }
+  input, button { font: inherit; padding: .4rem .6rem; margin: .2rem 0; }
+  li { list-style: none; margin: .3rem 0; }
+  li button { width: 100%; text-align: left; }
+  pre { white-space: pre-wrap; background: #f4f4f4; padding: 1rem; border-radius: 6px; }
+  #loginMsg { color: #b00020; }
+</style>
+</head>
+<body>
+<div class="banner">PROTOTYPE: Not for real reports. Fictional data only.</div>
+<h1>Investigator</h1>
+<button id="logout" hidden>Log out</button>
+
+<section id="login">
+  <form id="loginForm">
+    <div><input id="user" placeholder="Username" autocomplete="username" required></div>
+    <div><input id="pass" type="password" placeholder="Password" autocomplete="current-password" required></div>
+    <button type="submit">Log in</button>
+  </form>
+  <p id="loginMsg"></p>
+</section>
+
+<section id="cases" hidden>
+  <h2>Reports</h2>
+  <ul id="list"></ul>
+</section>
+
+<section id="detail" hidden>
+  <button id="back">&larr; Back to list</button>
+  <h2 id="meta"></h2>
+  <pre id="text"></pre>
+</section>
+
+<script>
+  let token = null;
+  const $ = (id) => document.getElementById(id);
+
+  async function api(path, options = {}) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = "Bearer " + token;
+    const res = await fetch(path, { ...options, headers });
+    if (res.status === 401 && token) logout("Session expired. Please log in again.");
+    return res;
+  }
+
+  function logout(message) {
+    token = null;
+    $("cases").hidden = true;
+    $("detail").hidden = true;
+    $("logout").hidden = true;
+    $("login").hidden = false;
+    $("loginMsg").textContent = message || "";
+  }
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const res = await api("/investigator/login", {
+      method: "POST",
+      body: JSON.stringify({ username: $("user").value, password: $("pass").value }),
+    });
+    $("pass").value = "";
+    if (!res.ok) {
+      $("loginMsg").textContent = res.status === 401 ? "Wrong username or password." : "Login is unavailable.";
+      return;
+    }
+    token = (await res.json()).token;
+    $("login").hidden = true;
+    $("loginMsg").textContent = "";
+    $("logout").hidden = false;
+    loadCases();
+  });
+
+  async function loadCases() {
+    const res = await api("/investigator/cases");
+    if (!res.ok) return;
+    const cases = await res.json();
+    const list = $("list");
+    list.replaceChildren();
+    $("detail").hidden = true;
+    $("cases").hidden = false;
+    if (cases.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "No reports yet.";
+      list.append(li);
+      return;
+    }
+    for (const c of cases) {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.textContent = c.created_date + " · " + c.category + " · " + c.case_id;
+      btn.addEventListener("click", () => openCase(c.case_id));
+      li.append(btn);
+      list.append(li);
+    }
+  }
+
+  async function openCase(id) {
+    const res = await api("/investigator/cases/" + encodeURIComponent(id));
+    if (!res.ok) return;
+    const r = await res.json();
+    $("meta").textContent = r.created_date + " · " + r.category + " · " + r.case_id;
+    $("text").textContent = r.transcript_scrubbed; // textContent: never run report text as HTML
+    $("cases").hidden = true;
+    $("detail").hidden = false;
+  }
+
+  $("back").addEventListener("click", loadCases);
+  $("logout").addEventListener("click", () => logout(""));
+</script>
+</body>
+</html>

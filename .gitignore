@@ -52,6 +52,9 @@ coverage/
 htmlcov/
 .coverage
 
+# Local development entry point
+run_local.py
+
 # OS and editors
 .DS_Store
 Thumbs.db
