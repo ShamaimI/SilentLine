@@ -1,0 +1,62 @@
+SILENTLINE: CASE LOOKUP RATE LIMITING, MANUAL TEST EVIDENCE
+Date: 2026-11-10
+Server: python -m uvicorn app.main:app --env-file .env --no-access-log
+Automated: tests/test_ratelimit.py, 13 passed. Full suite, 72 passed.
+
+==================== PART A (fresh server start) ====================
+PASS  T1 correct lookup returns 200
+PASS  T1 returns scrubbed text
+Codes: 404,404,404,404,404,429
+PASS  T2 five 404s then 429
+PASS  T3 correct passphrase still 429 while locked
+Retry-After: 900
+PASS  T4 Retry-After between 1 and 900
+429 body: {"detail":"Too many attempts. Try again later."}
+PASS  T5 body has no case id
+PASS  T5 body has no passphrase
+PASS  T5 body does not say IP or case
+PASS  T6 second case looks up fine
+Real case: 404 {"detail":"Case not found or passphrase incorrect."}
+Fake case: 404 {"detail":"Case not found or passphrase incorrect."}
+PASS  T8 same status
+PASS  T8 same message
+
+============ PART B (IP lockout across different cases) ============
+
+Run 1: server NOT restarted after Part A
+Codes: 404,404,404,429,429,429,429,429,429,429
+FAIL  T7 ten fake lookups are 404
+PASS  T7 real case with correct passphrase is 429 (IP locked)
+
+Explanation: this FAIL is a test-setup error, not a defect. The IP
+already had 7 recorded failures from Part A (5 from the case lockout
+in T2, 2 from T8; the blocked 6th attempt in T2 is not counted). The
+10-failure IP limit was therefore reached on the 3rd fake lookup,
+which confirms the limiter counts correctly.
+
+Run 2: server restarted, clean state
+Codes: 404,404,404,404,404,404,404,404,404,404
+PASS  T7 ten fake lookups are 404
+PASS  T7 real case with correct passphrase is 429 (IP locked)
+
+==================== TEST 9 (log safety) ====================
+Server terminal after all tests showed only startup and shutdown
+lines. No IP addresses, case IDs or passphrases were printed.
+
+==================== TEST 10 (lock expiry) ====================
+Not run manually (15-minute wait). Covered by automated tests using
+a fake clock: test_case_lock_expires, test_ip_lock_expires,
+test_lock_does_not_retrigger_after_expiry.
+
+==================== SUMMARY ====================
+Case lockout after 5 failures ................................ verified
+IP lockout after 10 failures across different cases ......... verified
+Correct passphrase blocked during a lock .................... verified
+Retry-After header present (900 s on a fresh lock) .......... verified
+Responses leak no case ID, passphrase or lock type .......... verified
+Wrong passphrase and nonexistent case indistinguishable ..... verified
+Server log free of identifiers (normal traffic) ............. verified
+
+Limitations: state is in memory and resets on restart, so run a
+single worker. Someone who knows a case ID can lock that case for
+15 minutes.
