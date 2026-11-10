@@ -68,3 +68,7 @@ transcript only. They never expose passphrases, password hashes, encryption
 fields, or raw report content. List responses are capped at the newest 100
 reports. If an individual stored row cannot be decrypted, the investigator
 list skips that row rather than exposing an error or failing the whole list.
+
+Uvicorn access logging is disabled during application startup so normal
+request logs do not expose client IPs, case IDs, passphrases, tokens, or report
+text. The application does not log request bodies or authentication material.

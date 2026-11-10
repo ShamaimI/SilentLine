@@ -1,5 +1,6 @@
 """FastAPI entry point for SilentLine."""
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 
@@ -12,6 +13,7 @@ from .security.investigator_auth import InvestigatorAuth
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
+    logging.getLogger("uvicorn.access").disabled = True
     get_store()  # fail fast: refuse to start without a valid ENCRYPTION_KEY
     application.state.investigator_auth = InvestigatorAuth.from_env()
     yield
