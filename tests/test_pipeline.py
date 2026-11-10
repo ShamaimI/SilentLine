@@ -1,6 +1,7 @@
 import pytest
 
 from app.contracts import SttResult
+from app.scrubber.scrubber import ReporterPII
 from app.pipeline import TranscriptionFailed, process_report, process_text
 
 
@@ -19,7 +20,11 @@ def test_process_report_rejects_empty_input() -> None:
 
 
 def test_process_report_scrubs_the_transcript() -> None:
-    result = process_report(b"fake-audio", transcribe=fake_ok)
+    result = process_report(
+        b"fake-audio",
+        transcribe=fake_ok,
+        reporter_pii=ReporterPII(name="Bilal", phone="03001234567"),
+    )
     assert "Bilal" not in result.transcript_scrubbed
     assert "03001234567" not in result.transcript_scrubbed
     assert result.removed_counts["NAME"] == 1
@@ -41,7 +46,7 @@ def test_process_report_raises_when_stt_returns_blank_text() -> None:
 def test_scrubber_is_always_applied_to_stt_text() -> None:
     seen = []
 
-    def spy(text: str):
+    def spy(text: str, *_):
         seen.append(text)
         return "[SCRUBBED]", {"NAME": 1}
 
@@ -51,7 +56,10 @@ def test_scrubber_is_always_applied_to_stt_text() -> None:
 
 
 def test_typed_text_is_scrubbed_too() -> None:
-    result = process_text("Email me at fictional.person@example.com")
+    result = process_text(
+        "Email me at fictional.person@example.com",
+        reporter_pii=ReporterPII(email="fictional.person@example.com"),
+    )
     assert "@" not in result.transcript_scrubbed
 
 

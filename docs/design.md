@@ -17,7 +17,7 @@ Browser -> FastAPI intake -> local STT -> PII scrubber
 | Browser intake | Voice recording and typed fallback | Browser APIs |
 | API | Validation and orchestration | FastAPI |
 | STT | Local transcription | faster-whisper |
-| PII scrubber | Remove common identifiers | Python rules and local names |
+| PII scrubber | Remove explicitly identified reporter PII while preserving accused/evidence text | Python rules and structured reporter fields |
 | Storage | Encrypted fictional reports | SQLite |
 
 ## Data model
@@ -52,8 +52,10 @@ fallback or complete without persona audio.
 
 ### Data handled
 
-Raw audio is transient processing input. Stored report content is scrubbed
-before persistence. Case access uses a random case ID and a hashed passphrase.
+Raw audio is transient processing input. Reporter-provided identifiers are
+scrubbed before persistence. Names and identifiers in the incident narrative
+are preserved because they may identify the accused or provide evidence.
+Case access uses a random case ID and a hashed passphrase.
 
 ### Known limits
 

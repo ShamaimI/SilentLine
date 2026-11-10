@@ -2,7 +2,7 @@
 from typing import Callable
 
 from app.contracts import ReportResult, SttResult
-from app.scrubber.scrubber import scrub
+from app.scrubber.scrubber import ReporterPII, scrub
 
 
 class TranscriptionFailed(Exception):
@@ -14,19 +14,27 @@ def _stub_transcribe(audio_bytes: bytes) -> SttResult:
     return SttResult(text="Fictional demo report.", language="en")
 
 
-def process_text(text: str, scrub_fn: Callable = scrub) -> ReportResult:
+def process_text(
+    text: str,
+    scrub_fn: Callable = scrub,
+    reporter_pii: ReporterPII | None = None,
+) -> ReportResult:
     """Typed reports and the STT fallback both come through here."""
     if not isinstance(text, str):
         raise TypeError("text must be str")
     if not text.strip():
         raise ValueError("text must not be empty")
-    clean, counts = scrub_fn(text)
+    if reporter_pii is None:
+        clean, counts = scrub_fn(text)
+    else:
+        clean, counts = scrub_fn(text, reporter_pii)
     return ReportResult(transcript_scrubbed=clean, removed_counts=counts)
 
 
 def process_report(audio_bytes: bytes,
                    transcribe: Callable[[bytes], SttResult] = _stub_transcribe,
-                   scrub_fn: Callable = scrub) -> ReportResult:
+                   scrub_fn: Callable = scrub,
+                   reporter_pii: ReporterPII | None = None) -> ReportResult:
     if not isinstance(audio_bytes, bytes):
         raise TypeError("audio_bytes must be bytes")
     if not audio_bytes:
@@ -34,4 +42,4 @@ def process_report(audio_bytes: bytes,
     stt = transcribe(audio_bytes)
     if not stt.ok or not stt.text.strip():
         raise TranscriptionFailed("transcription failed")
-    return process_text(stt.text, scrub_fn)
+    return process_text(stt.text, scrub_fn, reporter_pii)

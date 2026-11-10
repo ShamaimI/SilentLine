@@ -8,11 +8,15 @@ client = TestClient(app)
 
 
 def test_text_report_is_scrubbed():
-    r = client.post("/reports/text", json={"text": "Call Bilal on 03001234567", "category": "harassment"})
+    r = client.post("/reports/text", json={
+        "text": "Call Bilal on 03001234567. My name is Shumaim.",
+        "category": "harassment",
+        "reporter_name": "Shumaim",
+    })
     assert r.status_code == 200
     body = r.json()
-    assert "Bilal" not in body["transcript_scrubbed"]
-    assert "03001234567" not in body["transcript_scrubbed"]
+    assert "Bilal" in body["transcript_scrubbed"]
+    assert "Shumaim" not in body["transcript_scrubbed"]
     assert body["category"] == "harassment"
 
 
@@ -54,7 +58,7 @@ def test_audio_rejects_oversized_body(monkeypatch):
 
 
 def test_transcription_failure_asks_for_typed_report(monkeypatch):
-    def boom(_audio):
+    def boom(_audio, **_kwargs):
         raise TranscriptionFailed("fail")
 
     monkeypatch.setattr(reports, "process_report", boom)

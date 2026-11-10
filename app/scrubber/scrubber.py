@@ -1,5 +1,6 @@
 """PII removal. This is PII *removal*, not anonymity."""
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 CNIC = re.compile(r"(?<!\d)\d{5}-?\d{7}-?\d(?!\d)")
@@ -16,13 +17,37 @@ def _load_names() -> list[str]:
 _NAMES = _load_names()
 if not _NAMES:
     raise RuntimeError("app/scrubber/names.txt is empty: refusing to run without a names list")
-NAME = re.compile(r"\b(" + "|".join(map(re.escape, _NAMES)) + r")\b", re.IGNORECASE)
+@dataclass(frozen=True)
+class ReporterPII:
+    """Identifiers explicitly provided as belonging to the reporter."""
+
+    name: str | None = None
+    cnic: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    other: tuple[str, ...] = field(default_factory=tuple)
 
 
-def scrub(text: str) -> tuple[str, dict]:
-    """Return (scrubbed_text, counts). Order matters: CNIC before phone."""
-    counts = {}
-    for label, pattern in (("CNIC", CNIC), ("EMAIL", EMAIL), ("PHONE", PHONE), ("NAME", NAME)):
-        text, n = pattern.subn(f"[{label}]", text)
-        counts[label] = n
+def scrub(text: str, reporter_pii: ReporterPII | None = None) -> tuple[str, dict]:
+    """Scrub only identifiers explicitly belonging to the reporter."""
+    if not isinstance(text, str):
+        raise TypeError("text must be str")
+    pii = reporter_pii or ReporterPII()
+    counts = {"CNIC": 0, "EMAIL": 0, "PHONE": 0, "NAME": 0, "ADDRESS": 0, "OTHER": 0}
+    values = (
+        ("NAME", pii.name),
+        ("CNIC", pii.cnic),
+        ("PHONE", pii.phone),
+        ("EMAIL", pii.email),
+        ("ADDRESS", pii.address),
+    )
+    for label, value in values:
+        if value and value.strip():
+            text, n = re.subn(re.escape(value.strip()), f"[{label}]", text, flags=re.IGNORECASE)
+            counts[label] += n
+    for value in pii.other:
+        if value and value.strip():
+            text, n = re.subn(re.escape(value.strip()), "[OTHER]", text, flags=re.IGNORECASE)
+            counts["OTHER"] += n
     return text, counts

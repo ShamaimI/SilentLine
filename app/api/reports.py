@@ -2,12 +2,13 @@
 import os
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from app.cases.store import CaseStore
 from app.deps import get_store
 from app.pipeline import TranscriptionFailed, process_report, process_text
+from app.scrubber.scrubber import ReporterPII
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -22,6 +23,11 @@ Category = Literal[
 class TextReport(BaseModel):
     text: str = Field(min_length=1, max_length=20_000)
     category: Category = "other"
+    reporter_name: str | None = Field(default=None, max_length=200)
+    reporter_cnic: str | None = Field(default=None, max_length=32)
+    reporter_phone: str | None = Field(default=None, max_length=32)
+    reporter_email: str | None = Field(default=None, max_length=320)
+    reporter_address: str | None = Field(default=None, max_length=500)
 
 
 class ReportResponse(BaseModel):
@@ -58,7 +64,13 @@ def _save_and_respond(store: CaseStore, result, category: str, response: Respons
 def submit_text(report: TextReport, response: Response,
                 store: CaseStore = Depends(get_store)) -> ReportResponse:
     try:
-        result = process_text(report.text)
+        result = process_text(report.text, reporter_pii=ReporterPII(
+            name=report.reporter_name,
+            cnic=report.reporter_cnic,
+            phone=report.reporter_phone,
+            email=report.reporter_email,
+            address=report.reporter_address,
+        ))
     except ValueError:
         raise HTTPException(status_code=422, detail="Report text is empty.")
     return _save_and_respond(store, result, report.category, response)
@@ -66,6 +78,11 @@ def submit_text(report: TextReport, response: Response,
 
 @router.post("/audio", response_model=ReportResponse)
 async def submit_audio(request: Request, response: Response, category: Category = "other",
+                       reporter_name: str | None = Query(default=None, max_length=200),
+                       reporter_cnic: str | None = Query(default=None, max_length=32),
+                       reporter_phone: str | None = Query(default=None, max_length=32),
+                       reporter_email: str | None = Query(default=None, max_length=320),
+                       reporter_address: str | None = Query(default=None, max_length=500),
                        store: CaseStore = Depends(get_store)) -> ReportResponse:
     if not request.headers.get("content-type", "").startswith("audio/"):
         raise HTTPException(status_code=415, detail="Send audio as the request body.")
@@ -73,7 +90,13 @@ async def submit_audio(request: Request, response: Response, category: Category 
     if not audio:
         raise HTTPException(status_code=400, detail="Empty recording.")
     try:
-        result = process_report(audio)
+        result = process_report(audio, reporter_pii=ReporterPII(
+            name=reporter_name,
+            cnic=reporter_cnic,
+            phone=reporter_phone,
+            email=reporter_email,
+            address=reporter_address,
+        ))
     except TranscriptionFailed:
         raise HTTPException(
             status_code=422,

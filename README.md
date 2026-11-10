@@ -5,8 +5,8 @@
 ## What it does
 
 SilentLine lets a reporter submit a voice or typed report while minimizing
-identifying data. The prototype is designed for local processing, PII
-scrubbing, and encrypted storage of fictional demo reports.
+identifying data. Reporter-provided PII is scrubbed before encrypted storage,
+while accused names and incident evidence in the narrative are preserved.
 
 ## Problem and user
 

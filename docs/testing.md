@@ -24,7 +24,7 @@ pytest
 | ID | Edge case | Expected behaviour | Test / evidence | Result |
 |----|-----------|--------------------|-----------------|--------|
 | EC-01 | Invalid and empty report input is rejected | Type/value error | `tests/test_contracts.py` | Passed |
-| EC-02 | PII formats are scrubbed | Replacement token and count | `tests/test_scrubber.py` | Passed |
+| EC-02 | Reporter PII is scrubbed while accused/evidence text is preserved | Replacement token and count | `tests/test_scrubber.py`, `tests/test_report_api.py` | Passed |
 | EC-03 | Repeated case/login failures lock out | Generic 429 and Retry-After | `tests/test_ratelimit.py` | Passed |
 | EC-04 | Invalid investigator tokens are rejected | Generic 401 | `tests/test_investigator_routes.py` | Passed |
 | EC-05 | Unreadable encrypted rows do not break lists | Skip bad row | `tests/test_case_store.py` | Passed |

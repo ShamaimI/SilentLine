@@ -16,7 +16,7 @@ reviewing scrubbed reports.
 | ID | Requirement | Priority (Must / Should / Stretch) | Status |
 |----|-------------|------------------------------------|--------|
 | FR-01 | Accept typed reports and browser audio with a typed fallback | Must | Implemented |
-| FR-02 | Remove Pakistani CNICs, phone numbers, emails, and configured names | Must | Implemented |
+| FR-02 | Remove reporter-provided CNICs, phones, emails, names, addresses, and other identifiers while preserving accused/evidence text | Must | Implemented |
 | FR-03 | Store only scrubbed report text in encrypted SQLite | Must | Implemented |
 | FR-04 | Issue random case credentials and rate-limit lookup failures | Must | Implemented |
 | FR-05 | Authenticate investigator routes with expiring signed tokens | Must | Implemented |

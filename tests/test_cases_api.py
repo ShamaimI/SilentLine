@@ -31,11 +31,15 @@ def test_reporter_can_return_with_case_id_and_passphrase():
 
 
 def test_stored_text_is_scrubbed_never_raw(api_store):
-    body = _submit().json()
+    body = client.post("/reports/text", json={
+        "text": "Manager Bilal asked me to change marks. My name is Shumaim.",
+        "category": "favoritism",
+        "reporter_name": "Shumaim",
+    }).json()
     stored = api_store.get_report_for_investigator(body["case_id"])["transcript_scrubbed"]
-    assert "Bilal" not in stored and "03001234567" not in stored
+    assert "Bilal" in stored and "Shumaim" not in stored
     raw_db = open(api_store._db_path, "rb").read()
-    assert b"Bilal" not in raw_db and b"03001234567" not in raw_db
+    assert b"Bilal" not in raw_db and b"Shumaim" not in raw_db
 
 
 def test_wrong_passphrase_and_unknown_case_get_identical_404():

@@ -46,6 +46,12 @@ PAGE = """<!doctype html>
     </select>
     <label for="report-text">Typed report</label>
     <textarea id="report-text" placeholder="Describe a fictional concern..."></textarea>
+    <p class="muted">Optional reporter details below are scrubbed from the report. Names in the incident narrative are preserved as evidence.</p>
+    <label for="reporter-name">Your name</label><input id="reporter-name" autocomplete="off">
+    <label for="reporter-cnic">Your CNIC</label><input id="reporter-cnic" autocomplete="off">
+    <label for="reporter-phone">Your phone</label><input id="reporter-phone" autocomplete="off">
+    <label for="reporter-email">Your email</label><input id="reporter-email" autocomplete="off">
+    <label for="reporter-address">Your home address/location</label><input id="reporter-address" autocomplete="off">
     <button id="submit-text">Submit typed report</button>
     <button id="record" class="secondary">Start recording</button>
     <span id="recording-status" class="muted"></span>
@@ -81,6 +87,13 @@ const jsonRequest = async (url, options) => {
   if (!response.ok) throw new Error(body.detail?.message || body.detail || "Request failed");
   return body;
 };
+const reporterFields = () => ({
+  reporter_name: $("reporter-name").value || null,
+  reporter_cnic: $("reporter-cnic").value || null,
+  reporter_phone: $("reporter-phone").value || null,
+  reporter_email: $("reporter-email").value || null,
+  reporter_address: $("reporter-address").value || null
+});
 
 $("submit-text").onclick = async () => {
   const button = $("submit-text");
@@ -88,7 +101,7 @@ $("submit-text").onclick = async () => {
   try {
     const body = await jsonRequest("/reports/text", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text: $("report-text").value, category: $("category").value})
+      body: JSON.stringify({text: $("report-text").value, category: $("category").value, ...reporterFields()})
     });
     show($("submit-result"), `Case ID: ${body.case_id}\nPassphrase: ${body.passphrase}\n\nScrubbed report:\n${body.transcript_scrubbed}\n\nSave the case ID and passphrase. The passphrase is shown only once.`);
     $("report-text").value = "";
@@ -107,7 +120,9 @@ $("record").onclick = async () => {
     stream.getTracks().forEach(track => track.stop());
     $("recording-status").textContent = "Processing recording...";
     try {
-      const body = await jsonRequest(`/reports/audio?category=${encodeURIComponent($("category").value)}`, {
+      const params = new URLSearchParams({category: $("category").value});
+      Object.entries(reporterFields()).forEach(([key, value]) => { if (value) params.set(key, value); });
+      const body = await jsonRequest(`/reports/audio?${params}`, {
         method: "POST", headers: {"Content-Type": recorder.mimeType || "audio/webm"},
         body: new Blob(chunks, {type: recorder.mimeType || "audio/webm"})
       });
