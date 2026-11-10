@@ -57,3 +57,5 @@ htmlcov/
 Thumbs.db
 .idea/
 .vscode/
+# App data
+data/
