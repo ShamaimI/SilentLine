@@ -46,6 +46,18 @@ def test_wrong_passphrase_and_unknown_case_get_identical_404():
     assert wrong.json() == unknown.json()
 
 
+def test_repeated_wrong_lookups_are_rate_limited():
+    body = _submit().json()
+    payload = {"case_id": body["case_id"], "passphrase": "wrong-passphrase"}
+
+    responses = [client.post("/cases/lookup", json=payload) for _ in range(6)]
+
+    assert [response.status_code for response in responses[:5]] == [404] * 5
+    assert responses[5].status_code == 429
+    assert responses[5].headers["retry-after"]
+    assert responses[5].json()["detail"] == "Too many attempts. Try again later."
+
+
 def test_lookup_rejects_missing_empty_and_oversized_fields():
     assert client.post("/cases/lookup", json={}).status_code == 422
     assert client.post("/cases/lookup", json={"case_id": "", "passphrase": "x"}).status_code == 422
