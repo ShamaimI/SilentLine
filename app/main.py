@@ -4,13 +4,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api.cases import router as cases_router
+from .api.investigator import router as investigator_router
 from .api.reports import router as reports_router
 from .deps import get_store
+from .security.investigator_auth import InvestigatorAuth
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(application: FastAPI):
     get_store()  # fail fast: refuse to start without a valid ENCRYPTION_KEY
+    application.state.investigator_auth = InvestigatorAuth.from_env()
     yield
 
 
@@ -23,6 +26,7 @@ app = FastAPI(
 
 app.include_router(reports_router)
 app.include_router(cases_router)
+app.include_router(investigator_router)
 
 
 @app.get("/health")

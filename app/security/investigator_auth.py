@@ -40,6 +40,10 @@ class InvestigatorAuth:
         self._clock = clock
         self._password_mac = self._mac(password.encode("utf-8"))
 
+    @property
+    def ttl_seconds(self) -> int:
+        return self._ttl
+
     @classmethod
     def from_env(cls, env: Optional[Mapping[str, str]] = None, **kwargs):
         env = os.environ if env is None else env

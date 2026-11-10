@@ -53,3 +53,9 @@ Raw audio is transient processing input. Stored report content is scrubbed
 before persistence. Case access uses a random case ID and a hashed passphrase.
 
 ### Known limits
+
+Investigator login uses one shared password from the environment and a
+30-minute signed token for this prototype. Five failed passwords for the
+fixed investigator-login key lock that login from the case/IP limiter for
+15 minutes; this is intentionally a simple demo tradeoff rather than a
+multi-user identity system.

@@ -25,6 +25,8 @@ def test_app_refuses_to_start_without_encryption_key(monkeypatch) -> None:
 def test_app_starts_with_a_valid_key(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("ENCRYPTION_KEY", Fernet.generate_key().decode())
     monkeypatch.setenv("SILENTLINE_DB", str(tmp_path / "start.db"))
+    monkeypatch.setenv("INVESTIGATOR_PASSWORD", "test-investigator-password")
+    monkeypatch.setenv("SESSION_SECRET", "t" * 40)
     get_store.cache_clear()
     try:
         with TestClient(app) as client:
