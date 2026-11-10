@@ -1,14 +1,12 @@
 # SilentLine
 
-> Privacy-first occupational reporting prototype · Demo only, not for real reports
-
-> AI-Powered SE-MAX · CUI Tech Fest FA'26 · Team: <Team Name>
+> AI-Powered SE-MAX · CUI Tech Fest FA'26 · Team: Leisure Lads
 
 ## What it does
 
 SilentLine lets a reporter submit a voice or typed report while minimizing
-identifying data. Audio is processed locally, scrubbed for common PII, and
-stored only as an encrypted demo report.
+identifying data. The prototype is designed for local processing, PII
+scrubbing, and encrypted storage of fictional demo reports.
 
 ## Problem and user
 
@@ -17,24 +15,18 @@ investigators reviewing scrubbed fictional reports.
 
 ## Live deployment
 
-- **URL / install link:**
-- **Platform:**
+- **URL / install link:** Not deployed; run locally using the instructions below.
+- **Platform:** Python 3.11+, FastAPI, and Docker
 
 ## Judge quick start (under 5 minutes)
 
-<!-- Exact steps a judge follows to use the product without your laptop. -->
-
-1. Copy `.env.example` to `.env` and set local demo values.
+1. Clone this repository.
 2. Install dependencies with `pip install -r requirements.txt`.
 3. Run `uvicorn app.main:app --reload` and open `http://localhost:8000/docs`.
 
 ## Test accounts
 
-| Role | Username / email | Password |
-|------|------------------|----------|
-|      |                  |          |
-
-<!-- Test accounts only. Never real credentials. -->
+No test accounts are required for the current prototype scaffold.
 
 ## Run locally
 
@@ -82,7 +74,9 @@ pytest
 
 ## Team
 
-| Name | Role |
-|------|------|
-| Shumaim | Backend, product, PII scrubber, case security |
-| Ayesha | STT, upload hardening, investigator access |
+**Team name:** Leisure Lads
+
+| Name | Registration number | Role |
+|------|---------------------|------|
+| Shumaim Iftikhar | FA23-BAI-048 | Team leader; backend, product, PII scrubber, and case security |
+| Ayesha Khizer | FA23-BAI-009 | STT, upload hardening, and investigator access |
