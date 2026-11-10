@@ -16,6 +16,17 @@ def test_health_endpoint() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_home_page_contains_reporter_and_investigator_flows() -> None:
+    response = TestClient(app).get("/")
+
+    assert response.status_code == 200
+    assert "Not for real reports." in response.text
+    assert "/reports/text" in response.text
+    assert "/cases/lookup" in response.text
+    assert "/investigator/login" in response.text
+    assert "/investigator/reports" in response.text
+
+
 def test_app_refuses_to_start_without_encryption_key(monkeypatch) -> None:
     monkeypatch.delenv("ENCRYPTION_KEY", raising=False)
     get_store.cache_clear()

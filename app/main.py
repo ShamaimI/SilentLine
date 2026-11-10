@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 import logging
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from .api.cases import router as cases_router
 from .api.investigator import router as investigator_router
 from .api.reports import router as reports_router
 from .deps import get_store
 from .security.investigator_auth import InvestigatorAuth
+from .web import render_home
 
 
 @asynccontextmanager
@@ -36,3 +38,8 @@ def health() -> dict[str, str]:
     """Return a lightweight readiness response."""
 
     return {"status": "ok"}
+
+
+@app.get("/", response_class=HTMLResponse)
+def home() -> HTMLResponse:
+    return render_home()
