@@ -29,6 +29,36 @@ def test_planted_names_removed_case_insensitive():
     assert "ahmed" not in out.lower() and "khan" not in out.lower() and counts["NAME"] == 2
 
 
+def test_bare_name_is_removed_without_cue_word():
+    out, counts = scrub("Bilal")
+
+    assert out == "[NAME]"
+    assert counts["NAME"] == 1
+
+
+@pytest.mark.parametrize("phone", ["+92 300 1234567", "0300-1234567"])
+def test_common_pakistani_phone_formats_are_removed(phone):
+    out, counts = scrub(phone)
+
+    assert phone not in out
+    assert out == "[PHONE]"
+    assert counts["PHONE"] == 1
+
+
+def test_cnic_with_hyphens_is_removed():
+    out, counts = scrub("35202-1234567-1")
+
+    assert out == "[CNIC]"
+    assert counts["CNIC"] == 1
+
+
+def test_email_is_removed():
+    out, counts = scrub("Contact fictional.person@example.com")
+
+    assert out == "Contact [EMAIL]"
+    assert counts["EMAIL"] == 1
+
+
 def test_cnic_not_mistaken_for_phone():
     _, counts = scrub("ID 35202-1234567-1")
     assert counts["CNIC"] == 1 and counts["PHONE"] == 0
