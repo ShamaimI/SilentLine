@@ -7,7 +7,9 @@ from fastapi.responses import HTMLResponse
 
 from .api.cases import router as cases_router
 from .api.investigator import router as investigator_router
+from .api.investigator_cases import router as investigator_cases_router
 from .api.reports import router as reports_router
+from .api.reporter_ui import router as reporter_ui_router
 from .deps import get_store
 from .security.investigator_auth import InvestigatorAuth
 from .web import render_home
@@ -31,6 +33,8 @@ app = FastAPI(
 app.include_router(reports_router)
 app.include_router(cases_router)
 app.include_router(investigator_router)
+app.include_router(investigator_cases_router)
+app.include_router(reporter_ui_router)
 
 
 @app.get("/health")

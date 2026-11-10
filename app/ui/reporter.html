@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>SilentLine Reporter</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f3f5f8;
+    --surface: #fff;
+    --surface-muted: #f8fafc;
+    --text: #17212f;
+    --muted: #596779;
+    --border: #d9e0e8;
+    --accent: #2457a6;
+    --accent-hover: #194784;
+    --accent-soft: #eaf1fc;
+    --focus: #1d65c1;
+    --danger: #a5162a;
+    --danger-soft: #fff0f1;
+    --success: #17613c;
+    --success-soft: #e9f6ee;
+    --shadow: 0 12px 32px rgb(22 34 51 / 8%);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  [hidden] { display: none !important; }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--page);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+
+  .banner {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    padding: .55rem 1rem;
+    background: #9f1729;
+    color: #fff;
+    text-align: center;
+    font-size: .875rem;
+    font-weight: 650;
+    letter-spacing: .01em;
+  }
+
+  .topbar {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .topbar-inner {
+    display: flex;
+    max-width: 1080px;
+    min-height: 76px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin: 0 auto;
+    padding: .8rem 1.5rem;
+  }
+
+  .brand {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .75rem;
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+  }
+
+  .brand-mark {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  button, input, textarea, select { font: inherit; }
+
+  button {
+    min-height: 42px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 620;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  .tab {
+    padding: .55rem .85rem;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .tab:hover { background: var(--accent-soft); color: var(--accent); }
+  .tab[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+  main {
+    width: min(100% - 3rem, 1040px);
+    margin: 0 auto;
+    padding: 3rem 0 5rem;
+  }
+
+  .intro {
+    max-width: 680px;
+    margin: 0 auto 2rem;
+    text-align: center;
+  }
+
+  .kicker {
+    margin: 0 0 .45rem;
+    color: var(--accent);
+    font-size: .75rem;
+    font-weight: 750;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  h1, h2 {
+    margin: 0;
+    letter-spacing: -.04em;
+    line-height: 1.2;
+  }
+
+  h1 { font-size: clamp(2rem, 5vw, 3rem); }
+  h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); }
+
+  .intro p:last-child {
+    margin: .75rem auto 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+  }
+
+  .card {
+    width: min(100%, 720px);
+    margin: 0 auto;
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .card-heading { margin-bottom: 1.5rem; }
+  .card-heading p { margin: .45rem 0 0; color: var(--muted); }
+
+  form { display: grid; gap: 1.2rem; }
+  .field { display: grid; gap: .45rem; }
+  .field label { font-size: .9rem; font-weight: 650; }
+  .field-hint { margin: -.15rem 0 0; color: var(--muted); font-size: .82rem; }
+
+  input, textarea, select {
+    width: 100%;
+    min-height: 46px;
+    padding: .65rem .8rem;
+    border: 1px solid #aeb9c7;
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  textarea {
+    min-height: 190px;
+    resize: vertical;
+    line-height: 1.65;
+  }
+
+  input::placeholder, textarea::placeholder { color: #68778a; opacity: 1; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { border-color: var(--focus); }
+
+  .primary-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: .65rem 1.1rem;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .primary-button:hover:not(:disabled) { background: var(--accent-hover); }
+  .primary-button:disabled { cursor: wait; opacity: .7; }
+
+  .error-message, .success-message {
+    min-height: 1.5rem;
+    margin: .85rem 0 0;
+    font-size: .9rem;
+    font-weight: 600;
+  }
+
+  .error-message { color: var(--danger); }
+  .success-message { color: var(--success); }
+
+  .result-card { border-color: #a9c5eb; }
+
+  .warning {
+    margin: 1.25rem 0;
+    padding: .85rem 1rem;
+    border: 1px solid #e0b848;
+    border-radius: 10px;
+    background: #fff8df;
+    color: #523d08;
+    font-weight: 750;
+  }
+
+  .secret-list { display: grid; gap: .9rem; }
+
+  .secret-field {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface-muted);
+  }
+
+  .secret-label {
+    display: block;
+    margin-bottom: .45rem;
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .secret-value {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+  }
+
+  .secret-value code {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .copy-button, .secondary-button {
+    flex: 0 0 auto;
+    padding: .45rem .7rem;
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .copy-button:hover, .secondary-button:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .result-actions { display: flex; justify-content: end; margin-top: 1.2rem; }
+  .lookup-result { margin-top: 1.5rem; }
+
+  .case-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: 1rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: .25rem .65rem;
+    border: 1px solid #b5c9e8;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: #1d477f;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+
+  .case-date { color: var(--muted); font-size: .9rem; font-weight: 600; }
+
+  .report-body {
+    min-height: 120px;
+    margin: 0;
+    padding: 1.2rem;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  @media (max-width: 680px) {
+    .topbar-inner { min-height: 0; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; }
+    .brand { gap: .55rem; font-size: 1rem; }
+    .brand-mark { width: 34px; height: 34px; }
+    nav { width: 100%; gap: .25rem; }
+    .tab { flex: 1; padding: .5rem .4rem; font-size: .88rem; }
+    main { width: min(100% - 2rem, 1040px); padding: 2rem 0 3rem; }
+    .intro { margin-bottom: 1.4rem; text-align: left; }
+    .intro p:last-child { margin-left: 0; font-size: .95rem; }
+    .secret-value { align-items: start; }
+  }
+
+  @media (max-width: 400px) {
+    .secret-value { flex-direction: column; }
+    .copy-button { align-self: start; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #111820;
+      --surface: #19232e;
+      --surface-muted: #202c38;
+      --text: #e7edf5;
+      --muted: #b2bfce;
+      --border: #354454;
+      --accent: #91b9f4;
+      --accent-hover: #b2d0fb;
+      --accent-soft: #263b55;
+      --focus: #a6c9ff;
+      --danger: #ff9aa8;
+      --danger-soft: #44242b;
+      --success: #83d6a5;
+      --success-soft: #1e3b2b;
+      --shadow: 0 12px 32px rgb(0 0 0 / 24%);
+    }
+
+    input, textarea, select { border-color: #617185; }
+    input::placeholder, textarea::placeholder { color: #b2bfce; }
+    .warning { border-color: #8d763b; background: #39321f; color: #f8e4a5; }
+    .badge { border-color: #496990; color: #d0e3ff; }
+    .case-date { color: var(--muted); }
+    .copy-button:hover, .secondary-button:hover { border-color: var(--accent); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="banner">PROTOTYPE: Not for real reports. Fictional data only.</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <p class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3 19 6v5c0 4.5-2.9 7.7-7 10-4.1-2.3-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      SilentLine Reporter
+    </p>
+    <nav aria-label="Reporter options">
+      <button class="tab" id="submitTab" type="button" aria-pressed="true">Submit a report</button>
+      <button class="tab" id="lookupTab" type="button" aria-pressed="false">Check my case</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="submitScreen" aria-labelledby="submitTitle">
+    <div class="intro">
+      <p class="kicker">Private reporting</p>
+      <h1 id="submitTitle">Your voice matters.</h1>
+      <p>Share a report or securely check one you have already submitted.</p>
+    </div>
+
+    <div class="card" id="submitCard">
+      <div class="card-heading">
+        <h2>Submit a report</h2>
+        <p>Use fictional information only. Do not include your name or contact details.</p>
+      </div>
+      <form id="reportForm">
+        <div class="field">
+          <label for="reportText">What would you like to report?</label>
+          <textarea id="reportText" name="text" minlength="1" maxlength="20000" required placeholder="Describe what happened. Avoid details that could identify you."></textarea>
+          <p class="field-hint">Up to 20,000 characters. Your report is processed to remove identifying details.</p>
+        </div>
+        <div class="field">
+          <label for="reportCategory">Category</label>
+          <select id="reportCategory" name="category">
+            <option value="harassment">Harassment</option>
+            <option value="academic_dishonesty">Academic dishonesty</option>
+            <option value="misuse_of_funds">Misuse of funds</option>
+            <option value="favoritism">Favoritism</option>
+            <option value="safety">Safety</option>
+            <option value="other" selected>Other</option>
+          </select>
+        </div>
+        <button class="primary-button" id="submitButton" type="submit">Submit report</button>
+      </form>
+      <p class="error-message" id="submitError" role="alert" aria-live="assertive"></p>
+    </div>
+
+    <section class="card result-card" id="submissionResult" aria-labelledby="resultTitle" aria-live="polite" hidden>
+      <div class="card-heading">
+        <p class="kicker">Report received</p>
+        <h2 id="resultTitle">Your report is submitted</h2>
+      </div>
+      <p class="warning">Save this now. It will not be shown again.</p>
+      <div class="secret-list">
+        <div class="secret-field">
+          <span class="secret-label">Case ID</span>
+          <div class="secret-value">
+            <code id="resultCaseId"></code>
+            <button class="copy-button" id="copyCaseId" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="secret-field">
+          <span class="secret-label">Passphrase</span>
+          <div class="secret-value">
+            <code id="resultPassphrase"></code>
+            <button class="copy-button" id="copyPassphrase" type="button">Copy</button>
+          </div>
+        </div>
+      </div>
+      <p class="field-hint">Keep both values somewhere safe. You will need them to check your case.</p>
+      <div class="result-actions">
+        <button class="primary-button" id="doneButton" type="button">Done</button>
+      </div>
+    </section>
+  </section>
+
+  <section id="lookupScreen" aria-labelledby="lookupTitle" hidden>
+    <div class="intro">
+      <p class="kicker">Case lookup</p>
+      <h1 id="lookupTitle">Check your case.</h1>
+      <p>Enter the case ID and passphrase you saved when you submitted your report.</p>
+    </div>
+    <div class="card">
+      <div class="card-heading">
+        <h2>Find your report</h2>
+        <p>Your lookup details are sent securely and are not added to the page URL.</p>
+      </div>
+      <form id="lookupForm">
+        <div class="field">
+          <label for="lookupCaseId">Case ID</label>
+          <input id="lookupCaseId" name="case_id" maxlength="64" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="lookupPassphrase">Passphrase</label>
+          <input id="lookupPassphrase" name="passphrase" type="password" maxlength="64" autocomplete="off" required>
+        </div>
+        <button class="primary-button" id="lookupButton" type="submit">Check my case</button>
+      </form>
+      <p class="error-message" id="lookupError" role="alert" aria-live="assertive"></p>
+      <section class="lookup-result" id="lookupResult" aria-label="Case report" aria-live="polite" hidden>
+        <div class="case-meta">
+          <span class="badge" id="lookupCategory"></span>
+          <time class="case-date" id="lookupDate"></time>
+        </div>
+        <h2 class="report-label">Scrubbed report</h2>
+        <pre class="report-body" id="lookupTranscript"></pre>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script>
+  let submittedCaseId = "";
+  let submittedPassphrase = "";
+
+  const $ = (id) => document.getElementById(id);
+
+  function showScreen(screen) {
+    const showSubmit = screen === "submit";
+    $("submitScreen").hidden = !showSubmit;
+    $("lookupScreen").hidden = showSubmit;
+    $("submitTab").setAttribute("aria-pressed", String(showSubmit));
+    $("lookupTab").setAttribute("aria-pressed", String(!showSubmit));
+  }
+
+  function clearSubmission() {
+    submittedCaseId = "";
+    submittedPassphrase = "";
+    $("resultCaseId").textContent = "";
+    $("resultPassphrase").textContent = "";
+    $("submissionResult").hidden = true;
+    $("submitCard").hidden = false;
+  }
+
+  function startNewReport() {
+    clearSubmission();
+    $("reportForm").reset();
+    $("submitError").textContent = "";
+    showScreen("submit");
+    $("reportText").focus();
+  }
+
+  async function copySecret(value) {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      // Clipboard access is optional; do not expose secrets in an error message.
+    }
+  }
+
+  $("submitTab").addEventListener("click", startNewReport);
+
+  $("lookupTab").addEventListener("click", () => {
+    clearSubmission();
+    $("lookupError").textContent = "";
+    $("lookupResult").hidden = true;
+    showScreen("lookup");
+  });
+
+  $("reportForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = $("submitButton");
+    const originalText = button.textContent;
+    $("submitError").textContent = "";
+    button.disabled = true;
+    button.textContent = "Submitting…";
+
+    try {
+      const response = await fetch("/reports/text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: $("reportText").value,
+          category: $("reportCategory").value,
+        }),
+        cache: "no-store",
+        credentials: "omit",
+      });
+      if (!response.ok) throw new Error("Report submission failed");
+      const result = await response.json();
+
+      submittedCaseId = result.case_id;
+      submittedPassphrase = result.passphrase;
+      $("resultCaseId").textContent = submittedCaseId;
+      $("resultPassphrase").textContent = submittedPassphrase;
+      $("reportText").value = "";
+      $("submitCard").hidden = true;
+      $("submissionResult").hidden = false;
+      $("resultTitle").focus();
+    } catch {
+      $("submitError").textContent = "We couldn't submit your report. Please try again.";
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  });
+
+  $("copyCaseId").addEventListener("click", () => copySecret(submittedCaseId));
+  $("copyPassphrase").addEventListener("click", () => copySecret(submittedPassphrase));
+  $("doneButton").addEventListener("click", startNewReport);
+
+  $("lookupForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = $("lookupButton");
+    const originalText = button.textContent;
+    $("lookupError").textContent = "";
+    $("lookupResult").hidden = true;
+    button.disabled = true;
+    button.textContent = "Checking…";
+
+    try {
+      const response = await fetch("/cases/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          case_id: $("lookupCaseId").value,
+          passphrase: $("lookupPassphrase").value,
+        }),
+        cache: "no-store",
+        credentials: "omit",
+      });
+      if (response.status === 404) {
+        $("lookupError").textContent = "Case ID or passphrase not recognized";
+        return;
+      }
+      if (response.status === 429) {
+        $("lookupError").textContent = "Too many attempts. Try again later.";
+        return;
+      }
+      if (!response.ok) throw new Error("Case lookup failed");
+      const report = await response.json();
+
+      $("lookupCategory").textContent = report.category.replaceAll("_", " ");
+      $("lookupDate").dateTime = report.created_date;
+      $("lookupDate").textContent = report.created_date;
+      $("lookupTranscript").textContent = report.transcript_scrubbed;
+      $("lookupResult").hidden = false;
+    } catch {
+      $("lookupError").textContent = "We couldn't check your case right now. Please try again.";
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  });
+</script>
+</body>
+</html>

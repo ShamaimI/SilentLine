@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn[standard]>=0.30,<1",
     "argon2-cffi>=23.1,<26",
     "cryptography>=42,<50",
+    "av>=12,<14",
 ]
 
 [project.optional-dependencies]

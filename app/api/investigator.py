@@ -7,6 +7,13 @@ from app.cases.store import CaseStore
 from app.deps import get_store
 from app.security.investigator_auth import InvestigatorAuth
 from app.security.ratelimit import LookupRateLimiter, RateLimitExceeded
+from app.auth.security import (
+    TOKEN_TTL_SECONDS,
+    AuthNotConfigured,
+    check_credentials,
+    create_token,
+    verify_token,
+)
 
 router = APIRouter(prefix="/investigator", tags=["investigator"])
 login_limiter = LookupRateLimiter()
@@ -14,6 +21,7 @@ LOGIN_KEY = "investigator-login"
 
 
 class LoginRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=1, max_length=128)
     password: str = Field(min_length=1, max_length=256)
 
 
@@ -46,14 +54,19 @@ def _get_auth(request: Request) -> InvestigatorAuth:
 def require_investigator(
     request: Request,
     authorization: str | None = Header(default=None),
-) -> InvestigatorAuth:
+) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = authorization[7:].strip()
-    auth = _get_auth(request)
-    if not auth.verify_token(token):
+    auth = getattr(request.app.state, "investigator_auth", None)
+    if isinstance(auth, InvestigatorAuth):
+        if not auth.verify_token(token):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        return "investigator"
+    username = verify_token(token)
+    if username is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return auth
+    return username
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -68,6 +81,23 @@ def login(body: LoginRequest, request: Request) -> LoginResponse:
             headers={"Retry-After": str(error.retry_after or 900)},
         ) from error
 
+    if body.username is not None:
+        try:
+            valid = check_credentials(body.username, body.password)
+        except AuthNotConfigured as error:
+            raise HTTPException(
+                status_code=503,
+                detail="Investigator login is not configured",
+            ) from error
+        if not valid:
+            login_limiter.record_failure(LOGIN_KEY, client_ip)
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        login_limiter.record_success(LOGIN_KEY, client_ip)
+        return LoginResponse(
+            token=create_token(body.username),
+            expires_in=TOKEN_TTL_SECONDS,
+        )
+
     auth = _get_auth(request)
     if not auth.check_password(body.password):
         login_limiter.record_failure(LOGIN_KEY, client_ip)
@@ -75,6 +105,11 @@ def login(body: LoginRequest, request: Request) -> LoginResponse:
 
     login_limiter.record_success(LOGIN_KEY, client_ip)
     return LoginResponse(token=auth.issue_token(), expires_in=auth.ttl_seconds)
+
+
+@router.get("/me")
+def me(username: str = Depends(require_investigator)) -> dict[str, str]:
+    return {"username": username}
 
 
 @router.get("/reports", response_model=list[ReportView])
